@@ -1,0 +1,198 @@
+{-# LANGUAGE OverloadedStrings #-}
+
+module Fixtures.Programs where
+
+import Control.Program
+
+
+-- Program for sum N numbers (input: N A1 A2 ... AN):
+--
+--         TA 0
+--         RD
+--         ST           // store N to MEM[0]
+--         TA 1
+--         TV 0
+--         ST           // store 0 to MEM[1]
+-- "LOOP": TA 0
+--         DR           // read N from MEM[0]
+--         JZ "PRNT"    // if N == 0, goto "PRNT"
+--         TA 1
+--         TA 1
+--         DR           // read X from MEM[1]
+--         RD           // read Y
+--         AD           // X + Y
+--         ST           // store X = X+Y to MEM[1]
+--         TA 0
+--         TA 0
+--         DR           // read N from MEM[0]
+--         TV -1
+--         AD
+--         ST           // store N-1 to MEM[0]
+--         JU "LOOP"    // goto "LOOP"
+-- "PRNT": TA 1
+--         DR           // read X from MEM[1]
+--         WR           // write X to output
+-- "END":  EOP
+sumList :: Program
+sumList = TA 0 $. RD $. ST $. TA 1 $. TV 0 $. ST $. "LOOP" $: TA 0 $. DR $. JZ "PRNT" $. TA 1 $. TA 1 $. DR $. RD $. AD $. ST $. TA 0 $. TA 0 $. DR $. TV (-1) $. AD $. ST $. JU "LOOP" $. "PRNT" $: TA 1 $. DR $. WR $. "END" $: EOP
+
+-- GCD euclidean algorithm of two NON-NEGATIVE integers A, B, where A >= B
+--
+--         TA 0
+--         RD
+--         ST           // store A to MEM[0]
+--         TA 1
+--         RD
+--         ST           // store B to MEM[1]
+-- "LOOP": TA 1
+--         DR
+--         JZ "PRNT"    // if B == 0 go to PRNT
+--         TA 2
+--         TA 1
+--         DR
+--         ST           // copy B to MEM[2] (TMP)
+--         TA 1         // where mod should be placed
+--         TA 1
+--         DR           // B
+--         TA 1
+--         DR           // B
+--         TA 0
+--         DR           // A
+--         DI           // A/B
+--         MT           // (A/B) * B
+--         TA 0
+--         DR           // A
+--         SB           // A - (A/B) * B == A mod B
+--         ST           // store A mod B to MEM[1] (new B)
+--         TA 0
+--         TA 2
+--         DR
+--         ST           // replace A with old B from TMP (new A)
+--         JU "LOOP"
+-- "PRNT": TA 0
+--         DR           // read A from MEM[0]
+--         WR           // write A to output
+-- "END":  EOP
+gcd :: Program
+gcd = TA 0 $. RD $. ST $. TA 1 $. RD $. ST $. "LOOP" $: TA 1 $. DR $. JZ "PRNT" $. TA 2 $. TA 1 $. DR $. ST $. TA 1 $. TA 1 $. DR $. TA 1 $. DR $. TA 0 $. DR $. DI $. MT $. TA 0 $. DR $. SB $. ST $. TA 0 $. TA 2 $. DR $. ST $. JU "LOOP" $. "PRNT" $: TA 0 $. DR $. WR $. "END" $: EOP
+
+-- Fibonacci number for given N (>=0)
+--
+--         TA 0
+--         RD
+--         ST           // store N to MEM[0]
+--         TA 1
+--         TV 0
+--         ST           // store 0 to MEM[1]  (fibonacci n-2)
+--         TA 2
+--         TV 1
+--         ST           // store 1 to MEM[2]  (fibonacci n-1)
+--         TA 3
+--         TA 1
+--         DR
+--         ST           // store 0 to MEM[3]  (fibonacci n)
+--         TA 0
+--         DR
+--         JZ "PRNT"
+--         TA 0
+--         TA 0
+--         DR
+--         TV -1
+--         AD
+--         ST           // store N-1 back to MEM[0]
+--         TA 3
+--         TA 2
+--         DR
+--         ST           // store 1 to MEM[3]  (fibonacci n)
+-- "LOOP": TA 0
+--         DR
+--         JZ "PRNT"    // end if N == 0
+--         TA 0
+--         TA 0
+--         DR
+--         TV -1
+--         AD
+--         ST           // store N-1 back to MEM[0]
+--         TA 3
+--         TA 1
+--         DR
+--         TA 2
+--         DR
+--         AD
+--         ST           // MEM[3] := MEM[1] + MEM[2]
+--         TA 1
+--         TA 2
+--         DR
+--         ST           // MEM[1] := MEM[2]
+--         TA 2
+--         TA 3
+--         DR
+--         ST           // MEM[2] := MEM[3]
+--         JU "LOOP"
+-- "PRNT": TA 3
+--         DR           // read (fibonacci n) from MEM[3]
+--         WR           // write (fibonacci n) to output
+-- "END":  EOP
+fib :: Program
+fib = TA 0 $. RD $. ST $. TA 1 $. TV 0 $. ST $. TA 2 $. TV 1 $. ST $. TA 3 $. TA 1 $. DR $. ST $. TA 0 $. DR $. JZ "PRNT" $. TA 0 $. TA 0 $. DR $. TV (-1) $. AD $. ST $. TA 3 $. TA 2 $. DR $. ST $. "LOOP" $: TA 0 $. DR $. JZ "PRNT" $. TA 0 $. TA 0 $. DR $. TV (-1) $. AD $. ST $. TA 3 $. TA 1 $. DR $. TA 2 $. DR $. AD $. ST $. TA 1 $. TA 2 $. DR $. ST $. TA 2 $. TA 3 $. DR $. ST $. JU "LOOP" $. "PRNT" $: TA 3 $. DR $. WR $. "END" $: EOP
+
+-- Fibonacci numbers until given N (>=0)
+--         TA 0
+--         RD
+--         ST           // store N to MEM[0]
+--         TA 1
+--         TV 0
+--         ST           // store 0 to MEM[1]  (fibonacci n-2)
+--         TA 2
+--         TV 1
+--         ST           // store 1 to MEM[2]  (fibonacci n-1)
+--         TA 1
+--         DR
+--         WR
+--         TA 0
+--         DR
+--         JZ "END"
+--         TA 0
+--         TA 0
+--         DR
+--         TV -1
+--         AD
+--         ST           // store N-1 back to MEM[0]
+--         TA 2
+--         DR
+--         WR
+-- "LOOP": TA 0
+--         DR
+--         JZ "END"     // end if N == 0
+--         TA 0
+--         TA 0
+--         DR
+--         TV -1
+--         AD
+--         ST           // store N-1 back to MEM[0]
+--         TA 3
+--         TA 1
+--         DR
+--         TA 2
+--         DR
+--         AD
+--         ST           // MEM[3] := MEM[1] + MEM[2]
+--         TA 1
+--         TA 2
+--         DR
+--         ST           // MEM[1] := MEM[2]
+--         TA 2
+--         TA 3
+--         DR
+--         ST           // MEM[2] := MEM[3]
+--         TA 3
+--         DR           // read (fibonacci n) from MEM[3]
+--         WR           // write (fibonacci n) to output
+--         JU "LOOP"
+-- "END":  EOP
+fibSeq :: Program
+fibSeq = TA 0 $. RD $. ST $. TA 1 $. TV 0 $. ST $. TA 2 $. TV 1 $. ST $. TA 1 $. DR $. WR $. TA 0 $. DR $. JZ "END" $. TA 0 $. TA 0 $. DR $. TV (-1) $. AD $. ST $. TA 2 $. DR $. WR $. "LOOP" $: TA 0 $. DR $. JZ "END" $. TA 0 $. TA 0 $. DR $. TV (-1) $. AD $. ST $. TA 3 $. TA 1 $. DR $. TA 2 $. DR $. AD $. ST $. TA 1 $. TA 2 $. DR $. ST $. TA 2 $. TA 3 $. DR $. ST $. TA 3 $. DR $. WR $. JU "LOOP" $. "END" $: EOP
+
+-------------------------------------------------------------------------------
+-- All programs written by Marek Suchánek for Maude and rewritten to Haskell --
+-------------------------------------------------------------------------------
